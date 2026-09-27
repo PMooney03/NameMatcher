@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: namematcher-postgres
+    environment:
+      POSTGRES_USER: namematcher
+      POSTGRES_PASSWORD: namematcher
+      POSTGRES_DB: namematcher
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../database/schema/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - ../database/functions/002_functions.sql:/docker-entrypoint-initdb.d/002_functions.sql:ro
+      - ../database/seed/003_seed.sql:/docker-entrypoint-initdb.d/003_seed.sql:ro
+      - ../database/seed/004_extra.sql:/docker-entrypoint-initdb.d/004_extra.sql:ro
+      - ../database/procedures/005_procedures.sql:/docker-entrypoint-initdb.d/005_procedures.sql:ro
+      - ../database/relationships/006_relationships.sql:/docker-entrypoint-initdb.d/006_relationships.sql:ro
+      - ../database/active/007_active.sql:/docker-entrypoint-initdb.d/007_active.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U namematcher -d namematcher"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  browser:
+    image: sosedoff/pgweb:0.16.2
+    container_name: namematcher-browser
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    command:
+      - "--bind=0.0.0.0"
+      - "--listen=8081"
+      - "--url=postgres://namematcher:namematcher@postgres:5432/namematcher?sslmode=disable"

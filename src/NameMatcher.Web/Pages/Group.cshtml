@@ -1,0 +1,164 @@
+@page
+@model NameMatcher.Web.Pages.GroupModel
+@{
+    ViewData["Title"] = "Group and partners";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <h1>Group and partners</h1>
+        <p class="lead-copy">
+            A parent owns the other names in the group. Look one up in the GLEIF registry, or type it yourself. A link means two companies have worked together.
+        </p>
+
+        <form method="get" class="card shadow-sm mb-4">
+            <div class="card-body row g-3 align-items-end">
+                <div class="col-md-9">
+                    <label class="form-label" for="lookup-name">Company name</label>
+                    <input id="lookup-name" class="form-control" name="CompanyName" value="@Model.CompanyName" placeholder="Google or Smith and Sons Building" />
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100" type="submit">Show</button>
+                </div>
+            </div>
+        </form>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Message))
+        {
+            <div class="alert alert-warning">@Model.Message</div>
+        }
+        @if (Model.DatabaseError is not null)
+        {
+            <div class="alert alert-danger">@Model.DatabaseError</div>
+        }
+
+        @if (Model.Searched && Model.Message is null && Model.DatabaseError is null)
+        {
+            <h2 class="h5">Group</h2>
+            <div class="table-responsive card shadow-sm mb-4">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Role</th>
+                            <th>Company</th>
+                            <th>Normalised</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var member in Model.Group)
+                        {
+                            <tr>
+                                <td>@member.Role</td>
+                                <td>@member.CompanyName</td>
+                                <td><code>@member.NormalisedName</code></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="h5">Worked with</h2>
+            @if (Model.Links.Count == 0)
+            {
+                <p class="text-secondary">No contracts, suppliers, or clients are stored for this company.</p>
+            }
+            else
+            {
+                <div class="table-responsive card shadow-sm mb-4">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Partner</th>
+                                <th>Type</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var link in Model.Links)
+                            {
+                                <tr>
+                                    <td>@link.PartnerName</td>
+                                    <td>@link.LinkType</td>
+                                    <td>@link.Note</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+
+        <form method="get" asp-page-handler="Registry" class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h6">Look up a parent</h2>
+                <p class="text-secondary small">GLEIF is a public company registry. This only suggests a parent. Nothing is saved until you confirm.</p>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-9">
+                        <label class="form-label" for="registry-name">Company name</label>
+                        <input id="registry-name" class="form-control" name="companyName" value="@Model.CompanyName" placeholder="Google LLC" />
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100" type="submit">Look up</button>
+                    </div>
+                </div>
+                @if (Model.Suggestion is not null)
+                {
+                    <div class="alert alert-info mt-3 mb-0">
+                        <div>@Model.Suggestion.Message</div>
+                        @if (Model.Suggestion.MatchedLegalName is not null)
+                        {
+                            <div class="mt-2">Matched <strong>@Model.Suggestion.MatchedLegalName</strong> (@Model.Suggestion.Lei)</div>
+                        }
+                        @if (Model.Suggestion.ParentLegalName is not null)
+                        {
+                            <div>Parent <strong>@Model.Suggestion.ParentLegalName</strong> (@Model.Suggestion.ParentLei)</div>
+                            <button class="btn btn-primary mt-3" type="submit" form="save-registry">Save this parent</button>
+                        }
+                    </div>
+                }
+            </div>
+        </form>
+        @if (Model.Suggestion?.ParentLegalName is not null)
+        {
+            <form id="save-registry" method="post" asp-page-handler="Registry" class="d-none">
+                <input type="hidden" name="childName" value="@Model.Suggestion.MatchedLegalName" />
+                <input type="hidden" name="parentName" value="@Model.Suggestion.ParentLegalName" />
+            </form>
+        }
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <form method="post" asp-page-handler="Parent" class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h6">Set parent</h2>
+                        <label class="form-label" for="child-name">Company</label>
+                        <input id="child-name" class="form-control mb-2" name="ChildName" />
+                        <label class="form-label" for="parent-name">Parent</label>
+                        <input id="parent-name" class="form-control mb-3" name="ParentName" />
+                        <button class="btn btn-outline-primary" type="submit">Save parent</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <form method="post" asp-page-handler="Link" class="card shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h6">Record work together</h2>
+                        <label class="form-label" for="left-name">Company</label>
+                        <input id="left-name" class="form-control mb-2" name="LeftName" />
+                        <label class="form-label" for="right-name">Partner</label>
+                        <input id="right-name" class="form-control mb-2" name="RightName" />
+                        <label class="form-label" for="link-type">Type</label>
+                        <select id="link-type" class="form-select mb-2" name="LinkType">
+                            <option>contract</option>
+                            <option>supplier</option>
+                            <option>client</option>
+                        </select>
+                        <label class="form-label" for="link-note">Note</label>
+                        <input id="link-note" class="form-control mb-3" name="Note" />
+                        <button class="btn btn-outline-primary" type="submit">Save link</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

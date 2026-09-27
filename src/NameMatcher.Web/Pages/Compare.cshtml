@@ -1,0 +1,100 @@
+@page
+@model NameMatcher.Web.Pages.CompareModel
+@using NameMatcher.Core
+@{
+    ViewData["Title"] = "Compare names";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1>Compare two names</h1>
+        <p class="lead-copy">
+            These names are scored in PostgreSQL even when neither one is stored in the company table.
+        </p>
+
+        <form method="get" class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label" for="left-name">First name</label>
+                    <input id="left-name" class="form-control" name="LeftName" value="@Model.LeftName" maxlength="300" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="right-name">Second name</label>
+                    <input id="right-name" class="form-control" name="RightName" value="@Model.RightName" maxlength="300" />
+                </div>
+                <button class="btn btn-primary" type="submit">Compare</button>
+            </div>
+        </form>
+
+        @if (Model.Errors.Count > 0)
+        {
+            <div class="alert alert-warning">
+                @foreach (var error in Model.Errors)
+                {
+                    <div>@error</div>
+                }
+            </div>
+        }
+
+        @if (Model.DatabaseError is not null)
+        {
+            <div class="alert alert-danger">@Model.DatabaseError</div>
+        }
+
+        @if (Model.Comparison is { } comparison)
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <div>@Model.LeftName</div>
+                            <div class="text-secondary">@Model.RightName</div>
+                        </div>
+                        <span class="badge @MatchStrength.CssClass(comparison.FinalScore)">
+                            @comparison.FinalScore — @MatchStrength.Label(comparison.FinalScore)
+                        </span>
+                    </div>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Normalised first</dt>
+                        <dd class="col-sm-7"><code>@comparison.NormalisedLeft</code></dd>
+                        <dt class="col-sm-5">Normalised second</dt>
+                        <dd class="col-sm-7"><code>@comparison.NormalisedRight</code></dd>
+                        <dt class="col-sm-5">Levenshtein</dt>
+                        <dd class="col-sm-7">distance @comparison.LevenshteinDistance, similarity @comparison.LevenshteinScore%</dd>
+                        <dt class="col-sm-5">Tokens</dt>
+                        <dd class="col-sm-7">@comparison.TokenScore%</dd>
+                        <dt class="col-sm-5">Soundex</dt>
+                        <dd class="col-sm-7">@comparison.SoundexScore% (difference @comparison.DifferenceScore of 4)</dd>
+                        <dt class="col-sm-5">Trigram</dt>
+                        <dd class="col-sm-7">@comparison.TrigramScore% <span class="text-secondary">not in the final score</span></dd>
+                    </dl>
+                </div>
+            </div>
+
+            @if (Model.TokenPairs.Count > 0)
+            {
+                <div class="table-responsive card shadow-sm">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>First word</th>
+                                <th>Second word</th>
+                                <th>Similarity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pair in Model.TokenPairs)
+                            {
+                                <tr>
+                                    <td>@(pair.SearchWord ?? "—")</td>
+                                    <td>@(pair.CandidateWord ?? "—")</td>
+                                    <td>@pair.WordScore%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+    </div>
+</div>

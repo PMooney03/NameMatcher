@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NameMatcher.Core/NameMatcher.Core.csproj" />
+    <Project Path="src/NameMatcher.Infrastructure/NameMatcher.Infrastructure.csproj" />
+    <Project Path="src/NameMatcher.Web/NameMatcher.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NameMatcher.Tests/NameMatcher.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,122 @@
+@page
+@model NameMatcher.Web.Pages.MatchModel
+@using NameMatcher.Core
+@{
+    ViewData["Title"] = "Match details";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <p class="mb-3"><a asp-page="/Index" asp-route-companyName="@Model.CompanyName">Back to search</a></p>
+        <h1>Match details</h1>
+
+        @if (Model.Errors.Count > 0)
+        {
+            <div class="alert alert-warning">
+                @foreach (var error in Model.Errors)
+                {
+                    <div>@error</div>
+                }
+            </div>
+        }
+
+        @if (Model.DatabaseError is not null)
+        {
+            <div class="alert alert-danger">@Model.DatabaseError</div>
+        }
+
+        @if (Model.Match is { } match)
+        {
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <div class="text-secondary small">Search</div>
+                            <div class="fs-5">@Model.CompanyName</div>
+                        </div>
+                        <span class="badge @MatchStrength.CssClass(match.FinalScore)">
+                            @MatchStrength.Label(match.FinalScore)
+                        </span>
+                    </div>
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Candidate</dt>
+                        <dd class="col-sm-7">@match.CompanyName</dd>
+
+                        <dt class="col-sm-5">Normalised search</dt>
+                        <dd class="col-sm-7"><code>@match.NormalisedSearch</code></dd>
+
+                        <dt class="col-sm-5">Normalised candidate</dt>
+                        <dd class="col-sm-7"><code>@match.NormalisedName</code></dd>
+
+                        <dt class="col-sm-5">Exact normalised match</dt>
+                        <dd class="col-sm-7">@(match.IsExactNormalisedMatch ? "Yes" : "No")</dd>
+
+                        <dt class="col-sm-5">Levenshtein distance</dt>
+                        <dd class="col-sm-7">@match.LevenshteinDistance</dd>
+
+                        <dt class="col-sm-5">Levenshtein similarity</dt>
+                        <dd class="col-sm-7">@match.LevenshteinScore% <span class="text-secondary">(45% of the blend)</span></dd>
+
+                        <dt class="col-sm-5">Token similarity</dt>
+                        <dd class="col-sm-7">@match.TokenScore% <span class="text-secondary">(30% of the blend)</span></dd>
+
+                        <dt class="col-sm-5">Soundex score</dt>
+                        <dd class="col-sm-7">@match.SoundexScore% <span class="text-secondary">(25% of the blend)</span></dd>
+
+                        <dt class="col-sm-5">Soundex difference</dt>
+                        <dd class="col-sm-7">@match.DifferenceScore of 4</dd>
+
+                        <dt class="col-sm-5">Phonetic match</dt>
+                        <dd class="col-sm-7">@(match.IsPhoneticMatch ? "Yes (difference 3 or 4)" : "No")</dd>
+
+                        <dt class="col-sm-5">Trigram score</dt>
+                        <dd class="col-sm-7">@match.TrigramScore% <span class="text-secondary">(shown only, not in the final score)</span></dd>
+
+                        <dt class="col-sm-5">Final score</dt>
+                        <dd class="col-sm-7 fw-semibold">@match.FinalScore%</dd>
+
+                        @if (Model.Group?.Line is not null)
+                        {
+                            <dt class="col-sm-5">Linked companies</dt>
+                            <dd class="col-sm-7">
+                                <a asp-page="/Group" asp-route-companyName="@match.CompanyName">@Model.Group.Line</a>
+                            </dd>
+                        }
+                    </dl>
+                    <p class="text-secondary small mb-0 mt-3">
+                        Final score is 100 when the normalised names are identical.
+                        Otherwise it is 45% full-string Levenshtein, 30% token Levenshtein, and 25% phonetic.
+                    </p>
+                </div>
+            </div>
+
+            @if (Model.TokenPairs.Count > 0)
+            {
+                <h2 class="h5 mt-4">Word pairs</h2>
+                <p class="text-secondary">Each search word is matched to the closest unused candidate word.</p>
+                <div class="table-responsive card shadow-sm">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Search word</th>
+                                <th>Candidate word</th>
+                                <th>Similarity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pair in Model.TokenPairs)
+                            {
+                                <tr>
+                                    <td>@(pair.SearchWord ?? "—")</td>
+                                    <td>@(pair.CandidateWord ?? "—")</td>
+                                    <td>@pair.WordScore%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+    </div>
+</div>

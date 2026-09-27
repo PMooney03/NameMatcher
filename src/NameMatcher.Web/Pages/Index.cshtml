@@ -1,0 +1,115 @@
+﻿@page
+@model NameMatcher.Web.Pages.IndexModel
+@using NameMatcher.Core
+@{
+    ViewData["Title"] = "Name Matcher";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <h1>Name Matcher</h1>
+        <p class="lead-copy">
+            Search for a company name. Similar spelling and pronunciation are scored in PostgreSQL.
+        </p>
+        <div class="chip-row">
+            <span>Try</span>
+            <a class="btn btn-sm btn-outline-secondary" asp-page="/Index" asp-route-companyName="Stefen Engineering">Stefen Engineering</a>
+            <a class="btn btn-sm btn-outline-secondary" asp-page="/Index" asp-route-companyName="O Riley Technologies">O Riley Technologies</a>
+            <a class="btn btn-sm btn-outline-secondary" asp-page="/Index" asp-route-companyName="McDonnell Construction">McDonnell Construction</a>
+            <a class="btn btn-sm btn-outline-secondary" asp-page="/Index" asp-route-companyName="Colour Lab Printing">Colour Lab Printing</a>
+        </div>
+
+        <form method="get" class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-7">
+                        <label class="form-label" for="company-name">Company name</label>
+                        <input id="company-name" class="form-control form-control-lg" name="CompanyName"
+                               value="@Model.CompanyName" placeholder="Enter company name" maxlength="300" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="minimum-score">Minimum score</label>
+                        <input id="minimum-score" class="form-control" type="number" name="MinimumScore"
+                               value="@Model.MinimumScore" min="0" max="100" />
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" type="submit">Search</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.Errors.Count > 0)
+        {
+            <div class="alert alert-warning">
+                @foreach (var error in Model.Errors)
+                {
+                    <div>@error</div>
+                }
+            </div>
+        }
+
+        @if (Model.DatabaseError is not null)
+        {
+            <div class="alert alert-danger">@Model.DatabaseError</div>
+        }
+
+        @if (Model.SearchSubmitted && Model.Errors.Count == 0 && Model.DatabaseError is null)
+        {
+            <h2 class="h5 mb-3">Results for “@Model.CompanyName”</h2>
+
+            @if (Model.Results.Count == 0)
+            {
+                <p class="text-secondary">No companies scored at or above @Model.MinimumScore.</p>
+            }
+            else
+            {
+                <div class="table-responsive card shadow-sm">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Final</th>
+                                <th>Levenshtein</th>
+                                <th>Tokens</th>
+                                <th>Phonetic</th>
+                                <th>Trigram</th>
+                                <th>Exact normalised</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var result in Model.Results)
+                            {
+                                <tr>
+                                    <td>
+                                        <div>@result.CompanyName</div>
+                                        @if (Model.Groups.TryGetValue(result.CompanyId, out var group) && group.Line is not null)
+                                        {
+                                            <a class="group-note" asp-page="/Group" asp-route-companyName="@result.CompanyName">@group.Line</a>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="score-line" aria-hidden="true"><span class="score-fill" style="width:@(result.FinalScore)%"></span></span>
+                                        <span class="badge @MatchStrength.CssClass(result.FinalScore)">@result.FinalScore</span>
+                                        <span class="ms-1 small text-secondary">@MatchStrength.Label(result.FinalScore)</span>
+                                    </td>
+                                    <td>@result.LevenshteinScore</td>
+                                    <td>@result.TokenScore</td>
+                                    <td>@result.SoundexScore</td>
+                                    <td>@result.TrigramScore</td>
+                                    <td>@(result.IsExactNormalisedMatch ? "Yes" : "No")</td>
+                                    <td class="text-end">
+                                        <a asp-page="/Match"
+                                           asp-route-companyName="@Model.CompanyName"
+                                           asp-route-companyId="@result.CompanyId">Details</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+    </div>
+</div>

@@ -1,0 +1,13 @@
+{
+  "sqltools.connections": [
+    {
+      "name": "namematcher",
+      "driver": "PostgreSQL",
+      "server": "localhost",
+      "port": 5432,
+      "database": "namematcher",
+      "username": "namematcher",
+      "password": "namematcher"
+    }
+  ]
+}

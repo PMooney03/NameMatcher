@@ -1,0 +1,79 @@
+@page
+@model NameMatcher.Web.Pages.CompaniesModel
+@{
+    ViewData["Title"] = "Stored companies";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <h1>Stored companies</h1>
+        <p class="lead-copy">
+            New names go in through <code>usp_add_company</code>. Hide keeps the row and takes it out of search and groups. Delete is not on this page.
+        </p>
+
+        <form method="post" class="card shadow-sm mb-4">
+            <div class="card-body">
+                <label class="form-label" for="company-name">Company name</label>
+                <div class="row g-3 align-items-start">
+                    <div class="col-md-9">
+                        <input id="company-name" class="form-control" name="CompanyName" value="@Model.CompanyName" maxlength="300" placeholder="Enter company name" />
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" type="submit">Add</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.Errors.Count > 0)
+        {
+            <div class="alert alert-warning">
+                @foreach (var error in Model.Errors)
+                {
+                    <div>@error</div>
+                }
+            </div>
+        }
+
+        @if (Model.DatabaseError is not null)
+        {
+            <div class="alert alert-danger">@Model.DatabaseError</div>
+        }
+
+        <div class="table-responsive card shadow-sm">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Company name</th>
+                        <th>Normalised name</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var company in Model.Companies)
+                    {
+                        <tr class="@((company.CompanyId == Model.AddedId ? "table-success" : null) + (company.Active ? null : " text-secondary"))">
+                            <td>@company.CompanyId</td>
+                            <td>@company.CompanyName</td>
+                            <td><code>@company.NormalisedName</code></td>
+                            <td>
+                                <span class="badge @(company.Active ? "match-strong" : "match-low")">@(company.Active ? "Active" : "Hidden")</span>
+                            </td>
+                            <td class="text-end">
+                                <form method="post" asp-page-handler="Active">
+                                    <input type="hidden" name="companyId" value="@company.CompanyId" />
+                                    <input type="hidden" name="active" value="@(company.Active ? "false" : "true")" />
+                                    <button class="btn btn-sm btn-outline-secondary" type="submit">
+                                        @(company.Active ? "Hide" : "Restore")
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

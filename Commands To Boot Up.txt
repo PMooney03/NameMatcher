@@ -1,0 +1,22 @@
+1. Start the database and the simple viewer
+
+docker compose -f docker/docker-compose.yml up -d
+This starts two containers and leaves them running in the background.
+
+namematcher-postgres is PostgreSQL. It holds the companies, scores, groups, and contracts. Address: localhost, port 5432, database namematcher, user namematcher, password namematcher.
+namematcher-browser is the plain viewer at http://localhost:8081. It is already logged in. Use it to look at tables and run SQL.
+2. Start pgAdmin
+
+docker start namematcher-pgadmin
+This starts the pgAdmin container you already set up. Open http://localhost:5050. The server is saved as host namematcher-postgres, port 5432, database namematcher, user namematcher, password namematcher.
+
+3. Start the website
+
+dotnet run --project src/NameMatcher.Web --launch-profile http
+This starts the Name Matcher site at http://localhost:5290. Leave that window open. Search, compare, stored companies, and groups all run here. Ctrl+C in that window stops only the website.
+
+Stop it without deleting data
+
+docker stop namematcher-pgadmin
+docker compose -f docker/docker-compose.yml stop
+The first stops pgAdmin. The second stops PostgreSQL and the viewer. The company rows stay. Do not run docker compose down -v. The -v flag deletes the database.

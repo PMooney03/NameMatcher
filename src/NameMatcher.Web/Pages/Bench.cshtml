@@ -1,0 +1,59 @@
+@page
+@model NameMatcher.Web.Pages.BenchModel
+@{
+    ViewData["Title"] = "Benchmark";
+    var passed = Model.Results.Count(row => row.Passed);
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-11">
+        <h1>Benchmark</h1>
+        <p class="lead-copy">
+            These cases live in <code>match_case</code> and are scored by <code>evaluate_match_cases()</code>.
+        </p>
+
+        @if (Model.DatabaseError is not null)
+        {
+            <div class="alert alert-danger">@Model.DatabaseError</div>
+        }
+        else if (Model.Results.Count == 0)
+        {
+            <p class="text-secondary">No labelled cases are loaded.</p>
+        }
+        else
+        {
+            <p class="fw-semibold">@passed of @Model.Results.Count passed</p>
+            <div class="table-responsive card shadow-sm">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Result</th>
+                            <th>Search</th>
+                            <th>Expected company</th>
+                            <th>Score</th>
+                            <th>Rival</th>
+                            <th>Why this case exists</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Results)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="badge @(row.Passed ? "match-strong" : "text-bg-danger")">
+                                        @(row.Passed ? "Pass" : "Fail")
+                                    </span>
+                                </td>
+                                <td>@row.SearchName</td>
+                                <td>@row.ExpectedName</td>
+                                <td>@(row.ActualScore?.ToString() ?? "—")</td>
+                                <td>@(row.RivalScore?.ToString() ?? "—")</td>
+                                <td>@row.Note</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
