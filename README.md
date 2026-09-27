@@ -144,6 +144,21 @@ Soundex describes how the start of the name sounds. A high phonetic score is one
 
 ## Database
 
+The site is a view over this database. SQLTools is connected to `namematcher` on localhost. The public schema holds three tables: `company`, `company_link`, and `match_case`. Writes are the procedures in that list: add a company, add a worked-together link, delete, hide or restore, and set a parent.
+
+![SQLTools connected to namematcher, with tables company, company_link, and match_case, and the five write procedures](Images/SQLSchema.png)
+
+The same Stefen search the website shows can be run directly:
+
+```sql
+SELECT company_name, final_score, levenshtein_score, token_score, soundex_score
+FROM find_company_matches('Stefen Engineering', 50, 8);
+```
+
+Stefen is 100. Steven is 98. Stephen Engineering Limited is 91. The phonetic column is 100 for every row in that set, because the names start with the same sound. The site renders this grid. It does not rescore it.
+
+![find_company_matches for Stefen Engineering, with final, Levenshtein, token, and Soundex scores](Images/SQLQuery.png)
+
 After the scripts have run, `company` stores:
 
 | Column | Purpose |
